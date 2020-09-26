@@ -8,8 +8,10 @@ import chat.network.SocketThreadListener;
 
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Vector;
 
 /**
@@ -105,13 +107,6 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         putLog("Client thread started");
     }
 
-//    @Override
-//    public void onSocketStop(SocketThread thread) {
-//        putLog("Client thread stopped");
-//        listOfClients.remove(thread);
-//    }
-
-
     @Override
     public void onSocketStop(SocketThread thread) {
         ClientThread client = (ClientThread) thread;
@@ -134,7 +129,11 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
     public void onReceiveString(SocketThread thread, Socket socket, String msg) {
         ClientThread client = (ClientThread) thread;
         if (client.isAuthorized()) {
-            handleAuthMessage(client, msg);
+            try {
+                handleAuthMessage(client, msg);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
         } else {
             handleNonAuthMessage(client, msg);
         }
@@ -168,16 +167,35 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         sendToAllAuthorizedClients(Common.getUserList(getUsers()));
     }
 
-    private void handleAuthMessage(ClientThread client, String msg) {
+    private void handleAuthMessage(ClientThread client, String msg) throws SQLException {
         String[] arr = msg.split(Common.DELIMITER);
         String msgType = arr[0];
-        switch (msgType) {
-            case Common.TYPE_BCAST_CLIENT:
-                sendToAllAuthorizedClients(
-                        Common.getTypeBroadcast(client.getNickname(), arr[1]));
-                break;
-            default:
-                client.msgFormatError(msg);
+        if (!arr[1].contains("/")) {
+            switch (msgType) {
+                case Common.TYPE_BCAST_CLIENT:
+                    sendToAllAuthorizedClients(
+                            Common.getTypeBroadcast(client.getNickname(), arr[1]));
+                    break;
+                default:
+                    client.msgFormatError(msg);
+            }
+        } else {
+            String[] arrServiceMsg = arr[1].split(" ");
+            String serviceMsgType = arrServiceMsg[0];
+
+            switch (serviceMsgType) {// TODO: 26.09.2020 добавить проверка на наличие нового никнейма
+                case Common.CHANGE_LOGIN:
+                    sendToAllAuthorizedClients(
+                            Common.getTypeBroadcast(client.getNickname(), " changes nickname to:" + arrServiceMsg[1]));
+                    SqlClient.changeNickname(arrServiceMsg[1], client.getNickname());
+
+                    client.authAccept(arrServiceMsg[1]);
+                    sendToAllAuthorizedClients(Common.getUserList(getUsers()));
+client.updNickname();
+                    break;
+                default:
+                    client.msgFormatError(msg);
+            }
         }
     }
 

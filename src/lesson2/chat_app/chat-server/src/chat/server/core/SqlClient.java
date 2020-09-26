@@ -36,20 +36,15 @@ public class SqlClient {
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return null; //вернеем null, если запрос вернулся пустым
+        return null; //вернем null, если запрос вернулся пустым
     }
 
-    synchronized static String changeNickname(String login, String password) {
-        String query = String.format("select nickname from users where login='%s'" + //Запрос в бд
-                " and password='%s'", login, password);
-        try (ResultSet set = statement.executeQuery(query)) {  //Если вопрос вернет множество результатов
-            if (set.next())
-                return set.getString(1/*номер столбца или название столбца, например "nickname"*/);//забираем строку
+    synchronized static void changeNickname(String newNickname, String oldNickname)  {
+        String query = String.format("update users set nickname = '%s' where nickname = '%s'",  //Запрос в бд
+                 newNickname, oldNickname);
+        try {
+            statement.executeUpdate(query);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
-        return null; //вернеем null, если запрос вернулся пустым
-    }
-
-
-}
+}}

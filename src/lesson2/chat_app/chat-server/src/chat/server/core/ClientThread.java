@@ -49,4 +49,8 @@ public class ClientThread extends SocketThread {
         close();
     }
 
+    void updNickname(){
+        sendMessage(Common.CHANGE_LOGIN);
+    }
+
 }

@@ -18,6 +18,7 @@ public class Common {
     public static final String TYPE_BROADCAST = "/bcast";
     // то есть сообщение, которое будет посылаться всем
     public static final String USER_LIST = "/user_list";
+    public static final String CHANGE_LOGIN = "/cng_lgn";
     public static final String TYPE_BCAST_CLIENT = "/client_msg";
     public static final String TYPE_CLIENT_PRIVATE = "/private";
 

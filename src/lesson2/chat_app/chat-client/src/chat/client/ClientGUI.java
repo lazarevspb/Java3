@@ -79,13 +79,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
         log.setEditable(false);
         JScrollPane scrollUsers = new JScrollPane(userList);
         JScrollPane scrollLog = new JScrollPane(log);
-//        String[] users = {"user",
-//                "user",
-//                "user",
-//                "user",
-//                "user",
-//                "user _with_at_looooooooooooooooooong_name",};
-//        userList.setListData(users);
+
         scrollUsers.setPreferredSize(new Dimension(100, 0));
         cbAlwaysOnTop.addActionListener(this);
         btnSend.addActionListener(this);
@@ -225,7 +219,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
     @Override
     public void onReceiveString(SocketThread thread, Socket socket, String msg) {
         handleMessage(msg);
-        putLog(msg);
+//        putLog(msg);
     }
 
     @Override
@@ -237,6 +231,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
     private void handleMessage(String msg) {
         String[] arr = msg.split(Common.DELIMITER);
         String msgType = arr[0];
+
         switch (msgType) {
             case Common.AUTH_ACCEPT:
                 setTitle(WINDOW_TITLE + " entered with nickname: " + arr[1]);  //тайтл устанавливается по факту авторизации
@@ -251,6 +246,9 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
             case Common.TYPE_BROADCAST:
                 putLog(DATE_FORMAT.format(Long.parseLong(arr[1])) +
                         arr[2] + ": " + arr[3]);
+                break;
+            case Common.CHANGE_LOGIN:
+
                 break;
             case Common.USER_LIST:
                 String users = msg.substring(Common.USER_LIST.length() +
