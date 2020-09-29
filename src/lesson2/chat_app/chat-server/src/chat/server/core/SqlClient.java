@@ -40,10 +40,10 @@ public class SqlClient {
     }
 
     synchronized static void changeNickname(String newNickname, String oldNickname)  {
-        String query = String.format("update users set nickname = '%s' where nickname = '%s'",  //Запрос в бд
+        String update = String.format("update users set nickname = '%s' where nickname = '%s'",  //Запрос в бд
                  newNickname, oldNickname);
         try {
-            statement.executeUpdate(query);
+            statement.executeUpdate(update);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

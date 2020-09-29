@@ -1,15 +1,12 @@
 package chat.client;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.Scanner;
 
 public class LogFile extends File {
     private String nameFile;
     private String contentLogFile;
-    Scanner scanner;
+  Scanner scanner;
 
     public LogFile(String nameFile, String contentLogFile) {
         super("log");
@@ -17,6 +14,8 @@ public class LogFile extends File {
         this.contentLogFile = contentLogFile;
 
     }
+
+
 
     public LogFile(String nameFile) {
         super("log");
@@ -46,7 +45,7 @@ public class LogFile extends File {
         return file.exists();
     }
 
-    protected String readFile(String nameFile) throws FileNotFoundException {
+    protected  String readFile(String nameFile) throws FileNotFoundException {
         StringBuilder stringBuilder = new StringBuilder();
         scanner = new Scanner(new FileInputStream(nameFile));
         while (scanner.hasNext()) {
@@ -54,5 +53,20 @@ public class LogFile extends File {
         }
         scanner.close();
         return stringBuilder.toString();
+    }
+
+    protected boolean createFile(String name){
+        File file = new File(this.nameFile);
+      return   file.mkdir();
+
+    }
+
+    protected void wrtMsgToLogFile(String msg) {
+        try (FileWriter out = new FileWriter("log", true)) {
+            out.write(msg + "\n");
+            out.flush();
+        } catch (IOException e) {
+           e.printStackTrace();
+        }
     }
 }

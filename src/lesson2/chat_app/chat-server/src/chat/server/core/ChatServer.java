@@ -183,7 +183,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
             String[] arrServiceMsg = arr[1].split(" ");
             String serviceMsgType = arrServiceMsg[0];
 
-            switch (serviceMsgType) {// TODO: 26.09.2020 добавить проверка на наличие нового никнейма
+            switch (serviceMsgType) {// TODO: 26.09.2020 добавить проверка на повтор нового никнейма
                 case Common.CHANGE_LOGIN:
                     sendToAllAuthorizedClients(
                             Common.getTypeBroadcast(client.getNickname(), " changes nickname to:" + arrServiceMsg[1]));
@@ -191,7 +191,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
 
                     client.authAccept(arrServiceMsg[1]);
                     sendToAllAuthorizedClients(Common.getUserList(getUsers()));
-client.updNickname();
+                    client.updNickname();
                     break;
                 default:
                     client.msgFormatError(msg);

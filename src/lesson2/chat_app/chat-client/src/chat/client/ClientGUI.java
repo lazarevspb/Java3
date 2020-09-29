@@ -9,6 +9,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.Socket;
@@ -54,21 +55,22 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
     private final DateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss: ");
     private final String WINDOW_TITLE = "Chat";
     private Socket socket;
+    private LogFile logFile = new LogFile("log");
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(ClientGUI::new);
     }
 
     private ClientGUI() {
-//        if (logFile.exists()) { //обновление чата из лога
-//            try {
-//                logFile.addTextToFile(tfMessage.getText());
-//                log.setText(logFile.readFile("log"));
-//                log.setCaretPosition(log.getDocument().getLength());
-//            } catch (FileNotFoundException e) {
-//                throw new RuntimeException("File log not found");
-//            }
-//        }
+        if (logFile.exists()) { //обновление чата из лога
+            try {
+                logFile.addTextToFile(tfMessage.getText());
+                log.setText(logFile.readFile("log"));
+                log.setCaretPosition(log.getDocument().getLength());
+            } catch (FileNotFoundException e) {
+                throw new RuntimeException("File log not found");
+            }
+        }
 
         Thread.setDefaultUncaughtExceptionHandler(this);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
@@ -244,8 +246,11 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
                 socketThread.close();
                 break;
             case Common.TYPE_BROADCAST:
-                putLog(DATE_FORMAT.format(Long.parseLong(arr[1])) +
-                        arr[2] + ": " + arr[3]);
+                String formatMsg = DATE_FORMAT.format(Long.parseLong(arr[1])) +
+                        arr[2] + ": " + arr[3];
+                putLog(formatMsg);
+                    logFile.wrtMsgToLogFile(formatMsg);
+
                 break;
             case Common.CHANGE_LOGIN:
 
