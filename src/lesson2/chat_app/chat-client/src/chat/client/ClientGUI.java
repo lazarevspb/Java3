@@ -13,9 +13,13 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Homework for lesson #7
@@ -23,7 +27,6 @@ import java.util.Arrays;
  * @author Valeriy Lazarev
  * @since 14.09.2020
  */
-
 /**
  * Класс создает клиентские сокеты, которые при создании подключаются к серверу.
  * Оборачивает созданные сокеты в сокетТреады для работы в отдельном потоке.
@@ -33,6 +36,8 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
     private static final int WIDTH = 400;
     private static final int HEIGHT = 300;
     private static final int BORDER_SIZE = 5;
+    private static final int LIMIT_LINES = 100;
+
     private final JPanel mainPanel = new JPanel();
 
     private final JPanel panelTop = new JPanel(new GridLayout(2, 3));
@@ -62,13 +67,21 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
     }
 
     private ClientGUI() {
+
         if (logFile.exists()) { //обновление чата из лога
             try {
-                logFile.addTextToFile(tfMessage.getText());
-                log.setText(logFile.readFile("log"));
-                log.setCaretPosition(log.getDocument().getLength());
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException("File log not found");
+                StringBuilder stringBuilder = new StringBuilder();
+                List<String> strings = Files.lines(Paths.get("log"))
+                        .map(s -> s + " \n")
+                        .collect(Collectors.toList());
+
+                int i = strings.size() > LIMIT_LINES ? strings.size() - LIMIT_LINES : 0;
+                for (int j = i; j < strings.size(); j++) {
+                    stringBuilder.append(strings.get(j));
+                }
+                log.setText(stringBuilder.toString());
+            } catch (IOException e) {
+                throw new RuntimeException("Error method ClientGUI()");
             }
         }
 
@@ -249,7 +262,7 @@ public class ClientGUI extends JFrame implements ActionListener, Thread.Uncaught
                 String formatMsg = DATE_FORMAT.format(Long.parseLong(arr[1])) +
                         arr[2] + ": " + arr[3];
                 putLog(formatMsg);
-                    logFile.wrtMsgToLogFile(formatMsg);
+                logFile.wrtMsgToLogFile(formatMsg);
 
                 break;
             case Common.CHANGE_LOGIN:
