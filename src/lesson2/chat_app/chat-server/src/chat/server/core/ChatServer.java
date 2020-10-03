@@ -13,6 +13,13 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+
+/*
+ 2. На серверной стороне сетевого чата реализовать управление потоками через ExecutorService.
+ * */
 
 /**
  * Класс рождает сокеты реализует SSTL, STL. Класс отвечает за события всей серверной части приложения.
@@ -22,6 +29,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
     private ServerSocketThread server;
     private final DateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss ");
     private ChatServerListener listener;
+    ExecutorService executorService = Executors.newCachedThreadPool();
 
     public ChatServer(ChatServerListener listener) {
         this.listener = listener;
@@ -40,6 +48,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
             putLog("Server is not running");
         } else {
             server.interrupt();
+            executorService.shutdown();
         }
     }
 
@@ -121,8 +130,16 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
     @Override
     public void onSocketReady(SocketThread thread, Socket socket) {
 
+        executorService.execute(() -> {
+            System.out.println("Асинхронная задача");
+            listOfClients.add(thread);
+        });
+
+
+
+
         putLog("Client is ready to chat");
-        listOfClients.add(thread);
+
     }
 
     @Override
