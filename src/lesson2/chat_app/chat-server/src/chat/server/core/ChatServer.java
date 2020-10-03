@@ -96,7 +96,12 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
     @Override
     synchronized public void onSocketAccepted(ServerSocketThread thread, ServerSocket server, Socket socket) {
         String name = "Client " + socket.getInetAddress() + ":" + socket.getPort();
+
+        executorService.execute(() -> {
+                new ClientThread(this, name, socket);
+        });
         new ClientThread(this, name, socket);
+
     }
 
     @Override
@@ -129,15 +134,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
 
     @Override
     public void onSocketReady(SocketThread thread, Socket socket) {
-
-        executorService.execute(() -> {
-            System.out.println("Асинхронная задача");
             listOfClients.add(thread);
-        });
-
-
-
-
         putLog("Client is ready to chat");
 
     }
