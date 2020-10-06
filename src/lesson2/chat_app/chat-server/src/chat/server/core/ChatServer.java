@@ -100,7 +100,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         executorService.execute(() -> {
                 new ClientThread(this, name, socket);
         });
-        new ClientThread(this, name, socket);
+//        new ClientThread(this, name, socket);
 
     }
 
