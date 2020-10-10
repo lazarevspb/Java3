@@ -6,6 +6,7 @@ import chat.network.ServerSocketThreadListener;
 import chat.network.SocketThread;
 import chat.network.SocketThreadListener;
 
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.sql.SQLException;
@@ -15,16 +16,27 @@ import java.util.Arrays;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.*;
 
 
 /*
  2. На серверной стороне сетевого чата реализовать управление потоками через ExecutorService.
  * */
 
+/*
+ *
+ * 1. Добавить на серверную сторону чата логирование, с выводом информации о действиях на сервере
+ *  (запущен, произошла ошибка, клиент подключился, клиент прислал сообщение/команду).
+ * */
+
 /**
- * Класс рождает сокеты реализует SSTL, STL. Класс отвечает за события всей серверной части приложения.
+ * Класс рождает сокеты реализует SSTL, STL. Класс отвечает за события всей серверной части
+ * приложения.
  */
 public class ChatServer implements ServerSocketThreadListener, SocketThreadListener {
+
+    private static final Logger LOGGER = Logger.getLogger(ChatServer.class.getName());
+
     public Vector<SocketThread> listOfClients = new Vector<>();
     private ServerSocketThread server;
     private final DateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss ");
@@ -33,22 +45,37 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
 
     public ChatServer(ChatServerListener listener) {
         this.listener = listener;
+        try {
+            Handler h = new FileHandler("logServer.log", true);
+            h.setFormatter(new SimpleFormatter());
+            LOGGER.addHandler(h);
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public void start(int port) {
         if (server != null && server.isAlive()) {
+            LOGGER.log(Level.WARNING, "logger: Сервер уже запущен");
             putLog("Server already stared");
         } else {
             server = new ServerSocketThread(this, "Chat server", port, 2000);
+            LOGGER.log(Level.INFO, "logger: Сервер перешел в состояние \"Включен\".");
         }
     }
 
     public void stop() {
         if (server == null || !server.isAlive()) {
+            LOGGER.log(Level.WARNING, "logger: Сервер еще не запущен.");
             putLog("Server is not running");
         } else {
             server.interrupt();
             executorService.shutdown();
+            LOGGER.log(Level.INFO, "logger: Сервер перешел в состояние \"Выключен\".");
+
+
         }
     }
 
@@ -98,9 +125,8 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         String name = "Client " + socket.getInetAddress() + ":" + socket.getPort();
 
         executorService.execute(() -> {
-                new ClientThread(this, name, socket);
+            new ClientThread(this, name, socket);
         });
-//        new ClientThread(this, name, socket);
 
     }
 
@@ -119,7 +145,9 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
     @Override
     public void onSocketStart(SocketThread thread, Socket socket) {
         putLog("Client thread started");
+
     }
+
 
     @Override
     public void onSocketStop(SocketThread thread) {
@@ -127,6 +155,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         listOfClients.remove(thread);
         if (client.isAuthorized() && !client.isReconnecting()) {
             sendToAllAuthorizedClients(Common.getTypeBroadcast("Server", client.getNickname() + " disconnected"));
+            LOGGER.log(Level.INFO, "logger: Пользователь "+ client.getNickname() +" отключен.");
         }
         sendToAllAuthorizedClients(Common.getUserList(getUsers()));
     }
@@ -134,7 +163,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
 
     @Override
     public void onSocketReady(SocketThread thread, Socket socket) {
-            listOfClients.add(thread);
+        listOfClients.add(thread);
         putLog("Client is ready to chat");
 
     }
@@ -166,6 +195,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         String nickname = SqlClient.getNickname(login, password);
         if (nickname == null) {
             putLog("Invalid login attempt: " + login);
+            LOGGER.log(Level.WARNING, "logger: Логин не распознан");
             client.authFail();
             return;
         } else {
@@ -173,6 +203,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
             client.authAccept(nickname);
             if (oldClient == null) {
                 sendToAllAuthorizedClients(Common.getTypeBroadcast("Server", nickname + " connected"));
+                LOGGER.log(Level.INFO, "logger: Пользователь " + nickname + " подключился.");
             } else {
                 oldClient.reconnect();
                 listOfClients.remove(oldClient);
@@ -189,9 +220,13 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
                 case Common.TYPE_BCAST_CLIENT:
                     sendToAllAuthorizedClients(
                             Common.getTypeBroadcast(client.getNickname(), arr[1]));
+                    LOGGER.log(Level.INFO, "logger: Пользователь "+ client.getNickname() + " отправил сообщение.");
+
                     break;
                 default:
                     client.msgFormatError(msg);
+                    LOGGER.log(Level.WARNING, "logger: Неверный формат сообщения.");
+
             }
         } else {
             String[] arrServiceMsg = arr[1].split(" ");
@@ -209,6 +244,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
                     break;
                 default:
                     client.msgFormatError(msg);
+                    LOGGER.log(Level.WARNING, "logger: Неверный формат сообщения");
             }
         }
     }
