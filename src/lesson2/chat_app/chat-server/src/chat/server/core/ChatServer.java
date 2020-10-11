@@ -47,6 +47,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
         this.listener = listener;
         try {
             Handler h = new FileHandler("logServer.log", true);
+            h.setLevel(Level.ALL);
             h.setFormatter(new SimpleFormatter());
             LOGGER.addHandler(h);
 
@@ -58,7 +59,7 @@ public class ChatServer implements ServerSocketThreadListener, SocketThreadListe
 
     public void start(int port) {
         if (server != null && server.isAlive()) {
-            LOGGER.log(Level.WARNING, "logger: Сервер уже запущен");
+            LOGGER.log(Level.INFO, "logger: Сервер уже запущен");
             putLog("Server already stared");
         } else {
             server = new ServerSocketThread(this, "Chat server", port, 2000);
